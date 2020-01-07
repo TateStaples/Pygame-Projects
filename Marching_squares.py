@@ -6,6 +6,8 @@ from random import choice
 import time
 import math
 
+# hello tate let's see if this commits
+
 WHITE = (255, 255, 255)
 YELLOW = (255, 255, 0)
 BLUE = (0, 0, 255)
