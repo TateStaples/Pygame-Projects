@@ -1,7 +1,6 @@
 # october / november 2019
 
 import pygame
-
 pygame.init()
 
 windowWidth = 1200
