@@ -1,5 +1,4 @@
 # october 2019
-
 import random
 import pygame
 pygame.init()
