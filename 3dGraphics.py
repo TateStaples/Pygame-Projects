@@ -1,5 +1,4 @@
 # nov / december 2019
-
 import pygame
 import math
 pygame.init()
