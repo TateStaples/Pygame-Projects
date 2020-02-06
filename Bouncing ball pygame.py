@@ -1,10 +1,11 @@
 # october 2019
+
 import random
 import pygame
 pygame.init()
 
 window = pygame.display.set_mode((500,500))
-pygame.display.set_caption ('bouncing ball')
+pygame.display.set_caption('bouncing ball')
 
 x = 250
 y = 250

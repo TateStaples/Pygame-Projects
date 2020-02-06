@@ -1,187 +1,231 @@
-# october 5, 2019
-
-# record = 151 (at delay of 30)
-#TODO: add a pause and restart feature
+import random
 import pygame
 pygame.init()
 
-import random
-
-delay = 300
-
-windowWidth = 500
-windowHeight = 500
-
-window = pygame.display.set_mode((windowWidth, windowHeight))
-#pygame.display.set_caption("snake game")
-ScreenColor = (0, 0, 0)
-
-SnakeSpeed = 50
-SnakeX = windowWidth//2
-SnakeY = windowHeight//2
-SnakeWidth = 49
-SnakeHeight = 49
-SnakeDirection = 'right'
-SnakeColor = (0, 255, 0)
-
-applewidth = 50
-appleheight = 50
-appleColor = (255,0,0)
-appleX = random.randint(0, windowWidth - SnakeSpeed)//SnakeSpeed * SnakeSpeed
-appleY = random.randint(0, windowHeight - SnakeSpeed)//SnakeSpeed * SnakeSpeed
-
-things = [(SnakeX, SnakeY)]
-
-window.fill(ScreenColor)
-pygame.draw.rect(window, SnakeColor, (things[0][0], things[0][1], SnakeWidth, SnakeHeight))
-pygame.draw.rect(window, appleColor, (appleX, appleY, applewidth, appleheight))
-pygame.display.update()
-pygame.time.delay(500)
+# created jan 2, 2020
+RED = (255, 0, 0)
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
 
 
-def create_board():
-    w, l = windowWidth//SnakeSpeed, windowHeight//SnakeSpeed
-    board = [[0 for i in range(w)] for j in range(l)]
-    #print(things)
-    for x, y in things:
-        r, c = x//SnakeSpeed, y//SnakeSpeed
-        board[r][c] = 1
-    apple_r, apple_c = appleX//SnakeSpeed, appleY//SnakeSpeed
-    board[apple_r][apple_c] = 3
-    head_r, head_c = SnakeX//SnakeSpeed, SnakeY//SnakeSpeed
-    board[head_r][head_c] = 2
-    return board
+class Snake:
+    head_val = 2
+
+    def __init__(self, board):
+        r, c = index_2d(board, self.head_val)
+        self.head = (r, c)
+        self.body = []
+        self.just_ate = False
+        self.eat_apple()
+        self.eat_apple()
+
+    def move(self, action):
+        for i, body_seg in enumerate(reversed(self.body), start=1):
+            if i == 1 and self.just_ate:
+                continue
+            if i < len(self.body) - 1:
+                self.body[-i] = self.body[-(i+1)]
+            else:
+                self.body[-i] = self.head
+        r, c = self.head
+        if action == "up":
+            r -= 1
+        elif action == "down":
+            r += 1
+        elif action == "right":
+            c += 1
+        elif action == "left":
+            c -= 1
+        self.head = (r, c)
+        self.just_ate = False
+
+    def eat_apple(self):
+        self.just_ate = True
+        if len(self.body) > 0:
+            self.body.append(self.body[-1])
+        else:
+            self.body.append(self.head)
 
 
-def write_board(file):
-    board = create_board()
-    for row in board:
-        for spot in row:
-            file.write(str(spot) + ",")
-    direction_vals = {"left": 0, "up": 1, "right": 2, "down": 3}
-    file.write(str(direction_vals[SnakeDirection]))
-    file.write("\n")
+class SnakeGame:
+    head_val = 2
+    body_val = 1
+    apple_val = 3
+    draw_delay = 50
 
+    def __init__(self, w=20, l=20):
+        self.width = w
+        self.length = l
+        self.board = None
+        self.snek = None
+        self.create_board()
 
-def decrypt_file(file):
-    solution_translator = {0: [1, 0, 0, 0], 1: [0, 1, 0, 0], 2: [0, 0, 1, 0], 3: [0, 0, 0, 1]}
-    situations = []
-    solutions = []
-    for line in file:
-        line = line.strip
-        info = line.split(',')
-        solution = solution_translator[int(info[-1])]
-        situation = (int(i) for i in info[:-1])
-        situations.append(solution)
-        situations.append(situation)
-    return situations, solutions
-
-file = open("Files/snake_data", 'w')
-run = True
-while run:
-    pygame.display.set_caption("snake game: length = " + str(len(things)))
-    pygame.time.delay(delay)
-    occupied = False
-    TastyApple = False
-    pygame.time.delay(10)  # wait 100 milliseconds
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-
-    keys = pygame.key.get_pressed()
-
-    if keys[pygame.K_SPACE]:
-        pygame.time.delay(200)
-        while True:
-            pygame.time.delay(100)
-            if keys[pygame.K_SPACE]:
+    def play_game(self, user=None):
+        user = self.manual if user is None else user
+        run = True
+        while run:
+            pygame.time.delay(self.draw_delay)
+            if self.board is not None:
+                self.draw_board()
+                pygame.display.update()
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        run = False
+            if not run or self.board is None:
                 break
-    if keys[pygame.K_DOWN]:
-        SnakeDirection = 'down'
-    if keys[pygame.K_UP]:
-        SnakeDirection = 'up'
-    if keys[pygame.K_RIGHT]:
-        SnakeDirection = 'right'
-    if keys[pygame.K_LEFT]:
-        SnakeDirection = 'left'
+            self.action = user()
+            self.update_board()
 
-    if SnakeDirection == 'right':
-        for object in things:
-            if object[0] == SnakeX + SnakeSpeed and object[1] == SnakeY: #and SnakeX != object[0] and SnakeY != object[1]:
-                occupied = True
+    def make_apple(self):
+        x, y = random.randint(0, self.width - 1), random.randint(0, self.length - 1)
+        while self.board[x][y] != 0:
+            x, y = random.randint(0, self.width - 1), random.randint(0, self.length - 1)
+        self.board[x][y] = self.apple_val
+
+    def create_board(self):
+        self.board = [[0 for i in range(self.width)] for j in range(self.length)]
+        self.board[self.length // 2][self.width // 2] = self.head_val
+        self.snek = Snake(self.board)
+        self.make_apple()
+
+    def update_board(self, b=None):
+        action = self.action
+        new_pos = self.get_next_pos(action)
+        if new_pos is None:
+            return None
+        r, c = new_pos
+        if self.board[r][c] == self.apple_val:  # if ate
+            self.snek.eat_apple()
+            self.make_apple()
+        elif len(self.snek.body) > 0:
+            r, c = self.snek.body[-1]  # get the back of the body
+            self.board[r][c] = 0
+        else:
+            r, c = self.snek.head
+            self.board[r][c] = 0
+        self.snek.move(action)
+        if len(self.snek.body) > 0:
+            r2, c2 = self.snek.body[0]
+            self.board[r2][c2] = self.body_val
+        r1, c1 = self.snek.head
+        self.board[r1][c1] = self.head_val
+        return self.board
+
+    def manual(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            return "left"
+        if keys[pygame.K_RIGHT]:
+            return "right"
+        if keys[pygame.K_UP]:
+            return "up"
+        if keys[pygame.K_DOWN]:
+            return "down"
+        try:
+            return self.action
+        except AttributeError:
+            return "right"
+
+    def get_next_pos(self, action):
+        r, c = index_2d(self.board, self.head_val)
+        try:
+            if action == "up":
+                r -= 1
+            elif action == "down":
+                r += 1
+            elif action == "right":
+                c += 1
+            elif action == "left":
+                c -= 1
+            if r < 0 or c < 0:
+                return None
+            if self.board[r][c] == self.body_val:
+                return None
+        except IndexError:
+            return None
+        return r, c
+
+    def __repr__(self):
+        string = ""
+        for row in self.board:
+            string += row + "\n"
+        return string
+
+    def draw_board(self):
+        box_width = window_width // self.width
+        box_height = window_height // self.length
+        window.fill(BLACK)
+        for r, row in enumerate(self.board):
+            for c, spot in enumerate(row):
+                color = GREEN
+                if spot == 0:
+                    color = BLACK
+                if spot == self.apple_val:
+                    color = RED
+                pygame.draw.rect(window, color, [c * box_width, r * box_height, box_width, box_height])
+
+
+class SimulatedSnake(SnakeGame):
+    apple_score = 1000
+    survive_score = 5
+    hit_wall = -1000
+    hit_body = -1000
+
+    def score_board(self, action):
+        if self.board is None:
+            return -10000
+        r, c = index_2d(self, self.head_val)
+        try:
+            if action == "up":
+                r -= 1
+            elif action == "down":
+                r += 1
+            elif action == "right":
+                c += 1
+            elif action == "left":
+                c -= 1
+            if r < 0 or c < 0:
+                return self.hit_wall
+            if self.board[r][c] == self.body_val:
+                return self.hit_body
+        except IndexError:
+            return self.hit_wall
+        apple = index_2d(self.board, self.apple_val)
+        if apple == (r, c):
+            return self.apple_score
+        return self.survive_score
+
+    def simulate_game(self, get_action_function):
+        self.create_board()
+        played_situations = []
+        run = True
+        while run and self.board is not None:
+            action = get_action_function(self.board)
+            reward = self.score_board(action)
+            if reward == self.apple_score:
+                played_situations = []
+            elif (self.snek.head, self.snek.body) in played_situations:
+                # print("loop")
+                break
             else:
-                if SnakeX + SnakeSpeed == appleX and SnakeY == appleY:
-                    TastyApple = True
-        if SnakeX + SnakeSpeed >= windowWidth or SnakeX + SnakeSpeed < 0:
-            occupied = True
-    elif SnakeDirection == 'left':
-        for object in things:
-            if object[0] == SnakeX - SnakeSpeed and object[1] == SnakeY: #and SnakeX != object[0] and SnakeY != object[1]:
-                occupied = True
-            else:
-                if SnakeX - SnakeSpeed == appleX and SnakeY == appleY:
-                    TastyApple = True
-        if SnakeX - SnakeSpeed > windowWidth or SnakeX - SnakeSpeed < 0:
-            occupied = True
-    elif SnakeDirection == 'up':
-        for object in things:
-            if object[0] == SnakeX and object[1] == SnakeY - SnakeSpeed: #and SnakeX != object[0] and SnakeY != object[1]:
-                occupied = True
-            else:
-                if SnakeX == appleX and SnakeY - SnakeSpeed == appleY:
-                    TastyApple = True
-        if SnakeY - SnakeSpeed > windowHeight or SnakeY - SnakeSpeed < 0:
-            occupied = True
-    else:
-        for object in things:
-            if object[0] == SnakeX and object[1] == SnakeY + SnakeSpeed: #and SnakeX != object[0] and SnakeY != object[1]:
-                occupied = True
-            else:
-                if SnakeX == appleX and SnakeY + SnakeSpeed == appleY:
-                    TastyApple = True
-        if SnakeY + SnakeSpeed >= windowHeight or SnakeY + SnakeSpeed < 0:
-            occupied = True
-    if not occupied:
-        #print ('got here 1')
-        if TastyApple:
-            bonus = things[0::-1]
-            #print('got here apple eaten')
-        reverse = things[::-1]
-        for count, seg in enumerate(reverse):
-            if reverse[count] != things[0]:
-                reverse[count] = reverse[count+1]
-                #print('got here snake moved')
-            else:
-                #print(len(things))
-                if SnakeDirection == 'right':
-                    reverse[count] = (seg[0] + SnakeSpeed, seg[1])
-                elif SnakeDirection == 'left':
-                    reverse[count] = (seg[0] - SnakeSpeed, seg[1])
-                elif SnakeDirection == 'up':
-                    reverse[count] = (seg[0], seg[1] - SnakeSpeed)
-                else:
-                    reverse[count] = (seg[0], seg[1] + SnakeSpeed)
-        things = reverse[::-1]
-        if TastyApple:
-            things.append(bonus[0])
-            #print ('things', things, 'reverse', things[::-1])
-            while (appleX, appleY) in things:
-                appleX = random.randint(0, windowWidth - applewidth)//SnakeSpeed * SnakeSpeed
-                appleY = random.randint(0, windowHeight - appleheight)//SnakeSpeed * SnakeSpeed
-            #print (appleX,appleY)
-        #print(things)
-    else:
-        print("Snake ran into something")
-        break
-    SnakeX = things[0][0]
-    SnakeY = things[0][1]
-    window.fill(ScreenColor)
-    for seg in things:
-        pygame.draw.rect(window, SnakeColor, (seg[0], seg[1], SnakeWidth, SnakeHeight))
-    pygame.draw.rect(window, appleColor, (appleX, appleY, applewidth, appleheight))
-    pygame.display.update()
-    write_board(file)
-pygame.time.delay(1000)
-print('quitting')
-print('Your Snake was', str(len(things)), 'long.')
-pygame.quit()
+                played_situations.append((self.snek.head, self.snek.body))
+            self.update_board(action)
+
+
+def index_2d(board, val):
+    for r, row in enumerate(board):
+        if val in row:
+            return r, row.index(val)
+    return None
+
+
+if __name__ == '__main__':
+    window_width = 500
+    window_height = 500
+    window = pygame.display.set_mode((window_width, window_height))
+    pygame.display.set_caption("snake game")
+    ScreenColor = BLACK
+    game = SnakeGame()
+    game.play_game()
+
+

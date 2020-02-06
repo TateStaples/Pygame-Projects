@@ -228,12 +228,12 @@ if __name__ == '__main__':
         for r, c in the_path:
             surround_walls(r, c)
         space = Space.make_space()
-    '''
+    #'''
     for r, c in flood_solve_maze((0, 1), (amount_of_cols-1, amount_of_rows-2)):
         if board[r][c] == 1:
             print("flood doesnt work")
         board[r][c] = 4
-    '''
+    #'''
     print("over")
     draw(board, color_dict)
     pygame.display.update()

@@ -1,7 +1,7 @@
 # nov / december 2019
 
 import pygame
-import math
+from math import *
 pygame.init()
 
 windowWidth = 500
@@ -10,8 +10,8 @@ windowHeight = 500
 window = pygame.display.set_mode((windowWidth, windowHeight))
 pygame.display.set_caption("3d Graphics")
 
-vFOV = 1.5  # vertical range of view (in radians)
-hFOV = 1.5  # horizontal angle of view (in radians)
+vFOV = pi/2  # vertical range of view (in radians)
+hFOV = pi/2  # horizontal angle of view (in radians)
 
 # use radians
 WHITE = (255, 255, 255)
@@ -52,8 +52,8 @@ def find_location(cord, player_info):
     x = x2 - x1
     y = y1 - y2
     z = z2 - z1 + 0.001  # todo prevent flipping
-    z_width = math.tan(hFOV/2) * z * 2
-    z_height = math.tan(vFOV/2) * z * 2
+    z_width = tan(hFOV/2) * z * 2
+    z_height = tan(vFOV/2) * z * 2
     x_angle = x/z_width * hFOV
     y_angle = y / z_height * vFOV
     if z < 0 and False:
@@ -72,10 +72,7 @@ class Polygon:
         self.color = color
 
     def draw(self, player):
-        coverted_list = []
-        for point in self.points:
-            coverted_list.append(find_location(point, player))
-        pygame.draw.polygon(window, self.color, coverted_list)
+        pygame.draw.polygon(window, self.color, player.convert_3d(self.points))
 
 
 class RectPrism:
@@ -88,8 +85,10 @@ class RectPrism:
         self.y_vals = {y1, y2, y3}
         self.z_vals = {z1, z2, z3}
         self.color = color
+        self.polygons = []
+        self.find_polys()
 
-    def draw(self, player):
+    def find_polys(self):
         x1, x2 = tuple(self.x_vals)
         y1, y2 = tuple(self.y_vals)
         z1, z2 = tuple(self.z_vals)
@@ -100,7 +99,7 @@ class RectPrism:
             cords.append((x, y2, z2))
             cords.append((x, y2, z1))
             poly = Polygon(cords, self.color)
-            poly.draw(player)
+            self.polygons.append(poly)
         for y in self.y_vals:
             cords = []
             cords.append((x1, y, z1))
@@ -108,7 +107,7 @@ class RectPrism:
             cords.append((x2, y, z2))
             cords.append((x2, y, z1))
             poly = Polygon(cords, self.color)
-            poly.draw(player)
+            self.polygons.append(poly)
         for z in self.z_vals:
             cords = []
             cords.append((x1, y1, z))
@@ -116,14 +115,19 @@ class RectPrism:
             cords.append((x2, y2, z))
             cords.append((x1, y2, z))
             poly = Polygon(cords, self.color)
+            self.polygons.append(poly)
+
+
+    def draw(self, player):
+        for poly in self.polygons:
             poly.draw(player)
 
 
 class Player:
     def __init__(self, start_cords):
         self.x, self.y, self.z = start_cords
-        self.x_view = 0  # allows for looking around
-        self.y_view = 0
+        self.x_view = 0  # left / right
+        self.y_view = 0  # up / down
         self.test = RectPrism(
             (
                 (-5, 0, 10),
@@ -177,10 +181,10 @@ class Player:
             if keys[pygame.K_SPACE]:
                 self.y = 40
             if keys[pygame.K_w]:  # change this
-                if self.y_view > -math.pi/2:
+                if self.y_view > -pi/2:
                     self.y_view -= .10
             if keys[pygame.K_s]:  # change this
-                if self.y_view < math.pi / 2:
+                if self.y_view < pi / 2:
                     self.y_view += .10
             if keys[pygame.K_d]:  # change this (turning in a full circle does a weird)
                 self.x_view += .10
@@ -198,4 +202,133 @@ class Player:
             pygame.display.update()
 
 
-main = Player((0, 20, 0))
+class Camera:
+    def __init__(self, x, y, z, tilt=0, turn=0, up=0):
+        self.tilt = 0
+        self.turn_rotation = 0
+        self.up_turn = 0
+        self.x = x
+        self.y = y
+        self.z = z
+
+    def player_input(self):
+
+        pygame.time.delay(10)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                quit()
+
+        keys = pygame.key.get_pressed()
+
+        speed = 10
+        forward_x = sin(self.turn_rotation) * speed
+        forward_z = cos(self.turn_rotation) * speed
+        if keys[pygame.K_DOWN]:
+            self.z -= forward_z
+            self.x -= forward_x
+        if keys[pygame.K_UP]:
+            self.z += forward_z
+            self.x += forward_x
+        if keys[pygame.K_RIGHT]:  # change this (turning in a full circle does a weird)
+            self.turn_rotation -= .10
+        if keys[pygame.K_LEFT]:  # change this
+            self.turn_rotation += .10
+        if keys[pygame.K_SPACE]:
+            self.y = 50
+        if keys[pygame.K_w]:  # change this
+            if self.up_turn > -pi / 2:
+                self.up_turn -= .10
+        if keys[pygame.K_s]:  # change this
+            if self.up_turn < pi / 2:
+                self.up_turn += .10
+        if keys[pygame.K_d]:
+            self.x -= forward_z
+            self.z -= forward_x
+        if keys[pygame.K_a]:
+            self.x += forward_z
+            self.z += forward_x
+        if self.y >= 20:
+            self.y -= 1
+
+        window.fill(ScreenColor)
+
+    def adjust_perspective(self, point):
+        x1, y1, z1 = point
+        x = x1 - self.x
+        y = y1 - self.y
+        z = z1 - self.z
+        turn_matix = (  # does a compression
+            (cos(self.turn_rotation), 0, -sin(self.turn_rotation)),
+            (0, 1, 0),
+            (sin(self.turn_rotation), 0, cos(self.turn_rotation))
+        )
+        x_sum = turn_matix[0][0] * x + turn_matix[0][1] * y + turn_matix[0][2] * z
+        y_sum = turn_matix[1][0] * x + turn_matix[1][1] * y + turn_matix[1][2] * z
+        z_sum = turn_matix[2][0] * x + turn_matix[2][1] * y + turn_matix[2][2] * z
+        return x_sum, y_sum, z_sum
+
+    def project_to_screen(self, cord):
+        global hFOV, vFOV, windowWidth, windowHeight
+        x2, y2, z2 = cord
+        x = self.x - x2
+        y = self.y - y2
+        z = z2 - self.z + 0.001  # todo prevent flipping
+        z_width = tan(hFOV / 2) * z * 2
+        z_height = tan(vFOV / 2) * z * 2
+        x_angle = x / z_width * hFOV
+        y_angle = y / z_height * vFOV
+        #x_angle, y_angle = adjust_perspective((x_angle, y_angle), perspective)
+        x_cord = x_angle / hFOV * windowWidth
+        y_cord = y_angle / vFOV * windowHeight
+        x_cord *= 1 if z > 0 else -1
+        y_cord *= 1 if z > 0 else -1
+        #player_view = adjust_perspective((x_cord, y_cord), perspective)
+        return convert_to_screen((x_cord, y_cord))
+
+    def convert_3d(self, list_of_points):
+        new_points = [self.adjust_perspective(point) for point in list_of_points]
+        for point in new_points:
+            x, y, z = point
+            if z > 0:
+                return [self.project_to_screen(pt) for pt in new_points]
+        return [(0, 0), (0, 0), (0, 0)]
+
+    @staticmethod
+    def matrix_mult(matrix1, matrix2):
+        pass
+
+
+if __name__ == '__main__':
+    main = Camera(0, 15, 0)
+    test = RectPrism(
+        (
+            (-5, 0, 10),
+            (5, 10, 10),
+            (5, 10, 20)  # todo figure out why the depth looks wrong
+        ),
+        GREEN
+    )
+    #'''
+    ground = Polygon(
+        [
+            (-1000, -100, -100),
+            (-1000, 0, 100),
+            (1000, 0, 100),
+            (1000, -100, -100),
+        ], BROWN
+    )
+    sky = Polygon(
+        [
+            (1000, 1000, 100),
+            (1000, 0, 100),
+            (-1000, 0, 100),
+            (-1000, 1000, 100)
+        ], LIGHT_BLUE
+    )
+    #'''
+    while True:
+        main.player_input()
+        #sky.draw(main)
+        #ground.draw(main)
+        test.draw(main)
+        pygame.display.update()

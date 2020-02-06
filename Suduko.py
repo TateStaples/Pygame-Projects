@@ -31,13 +31,14 @@ def create_board():
         board.append(row)
     return board
 
+
 def create_locked(amount):
     for i in range(amount):
         is_valid = False
         box = None
         while not is_valid:
             r, c = random.randint(0, 8), random.randint(0, 8)
-            print(r, c)
+            # print(r, c)
             box = board[r][c]
             is_valid = box.value == 0
         options = box.get_possiblities()
@@ -47,27 +48,33 @@ def create_locked(amount):
         box.draw_val(BLUE)
         box.update()
 
+
 def establish_possiblities():
     for row in board:
         for box in row:
             box.set_options()
 
+
 def get_row(r):
     return board[r]
 
+
 def get_col(c):
     return [row[c] for row in board]
+
 
 def get_box(r, c):
     row = r // 3
     col = c // 3
     return [board[3*row + i][3*col + j] for i in range(3) for j in range(3)]
 
+
 def filter(list1, list2):
     for item in list1[::-1]:
         if item in list2:
             list1.remove(item)
     return list1
+
 
 def place_locked():
     while True:
@@ -77,63 +84,73 @@ def place_locked():
 
         keys = pg.key.get_pressed()
         if keys[pg.K_1]:
-            r, c = get_square(pg.mouse.get_pos())
+            c, r = get_square(pg.mouse.get_pos())
             box = board[r][c]
             box.locked = True
             box.value = 1
             box.draw()
         if keys[pg.K_2]:
-            r, c = get_square(pg.mouse.get_pos())
+            c, r = get_square(pg.mouse.get_pos())
             box = board[r][c]
             box.locked = True
             box.value = 2
             box.draw()
         if keys[pg.K_3]:
-            r, c = get_square(pg.mouse.get_pos())
+            c, r = get_square(pg.mouse.get_pos())
             box = board[r][c]
             box.locked = True
             box.value = 3
             box.draw()
         if keys[pg.K_4]:
-            r, c = get_square(pg.mouse.get_pos())
+            c, r = get_square(pg.mouse.get_pos())
             box = board[r][c]
             box.locked = True
             box.value = 4
             box.draw()
         if keys[pg.K_5]:
-            r, c = get_square(pg.mouse.get_pos())
+            c, r = get_square(pg.mouse.get_pos())
             box = board[r][c]
             box.locked = True
             box.value = 5
             box.draw()
         if keys[pg.K_6]:
-            r, c = get_square(pg.mouse.get_pos())
+            c, r = get_square(pg.mouse.get_pos())
             box = board[r][c]
             box.locked = True
             box.value = 6
             box.draw()
         if keys[pg.K_7]:
-            r, c = get_square(pg.mouse.get_pos())
+            c, r = get_square(pg.mouse.get_pos())
             box = board[r][c]
             box.locked = True
             box.value = 7
             box.draw()
         if keys[pg.K_8]:
-            r, c = get_square(pg.mouse.get_pos())
+            c, r = get_square(pg.mouse.get_pos())
             box = board[r][c]
             box.locked = True
             box.value = 8
             box.draw()
         if keys[pg.K_9]:
-            r, c = get_square(pg.mouse.get_pos())
+            c, r = get_square(pg.mouse.get_pos())
             box = board[r][c]
             box.locked = True
             box.value = 9
             box.draw()
+        if keys[pg.K_RETURN]:
+            return
+        if keys[pg.K_DELETE]:
+            c, r = get_square(pg.mouse.get_pos())
+            box = board[r][c]
+            box.locked = False
+            box.value = 0
+            box.draw()
+
 
 def get_square(cords):
     x, y = cords
     return x // Box.box_width, y // Box.box_height
+
 
 def draw_boxes():
     for row in board:
@@ -146,6 +163,7 @@ def draw_boxes():
             pg.draw.rect(window, BLACK, [col*box_width, row*box_height, box_width, box_height], 5)
     pg.display.update()
 
+
 def over():
     draw_boxes()
     print("over")
@@ -154,6 +172,7 @@ def over():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 quit()
+
 
 def impossible():
     print("The board cannot be solved")
@@ -177,16 +196,29 @@ class Box:
 
     def get_possiblities(self):
         options = [i for i in range(1, 10)]
+        all_options = []
         r, c = self.position
         for box in get_row(r):
             if box.value in options:
                 options.remove(box.value)
+            #   all_options.append(box.value)
+            # elif box.value == 0:
+            #    all_options.extend(box.options)
         for box in get_col(c):
             if box.value in options:
                 options.remove(box.value)
+            #    all_options.append(box.value)
+            # elif box.value == 0:
+            #    all_options.append(box.options)
         for box in get_box(r, c):
             if box.value in options:
                 options.remove(box.value)
+            #    all_options.append(box.value)
+            # elif box.value == 0:
+            #    all_options.append(box.options)
+        # for i in range(1, 10):
+        #    if i not in all_options:
+        #        return [i] if i in options else []
         return options
 
     def is_vaild(self, val):
@@ -209,10 +241,10 @@ class Box:
     def draw_val(self, color=BLACK):
         if self.value == 0: return
         r, c = self.position
-        x, y = c * self.box_width+3, r * self.box_height
+        x, y = c * self.box_width + 20, r * self.box_height + 20
         msg = str(self.value)
         text_font = 'Comic Sans MS'
-        text_size = self.get_text_size(self.box_width, len(msg))
+        text_size = self.get_text_size(self.box_width, len(msg)) // 2
         font = pg.font.SysFont(text_font, text_size)
         score_surface = font.render(msg, False, color)
         window.blit(score_surface, (x, y))
@@ -228,7 +260,18 @@ class Box:
             self.draw_val(BLUE)
         else:
             self.draw_val()
+        self.draw_options(RED)
         self.update()
+
+    def draw_options(self, color):
+        msg = str(self.options[:4])
+        r, c = self.position
+        x, y = c * self.box_width+3, r * self.box_height + 3
+        text_font = 'Comic Sans MS'
+        text_size = 20
+        font = pg.font.SysFont(text_font, text_size)
+        score_surface = font.render(msg, False, color)
+        window.blit(score_surface, (x, y))
 
     # todo add guesses for top right
 
@@ -333,11 +376,13 @@ class SmartSolve:
             # pg.time.delay(100)
             box = self.get_next()
             if box is None:
-                self.break_path(self.current_parent)
+                print("test")
                 self.current_parent.value = 0
+                self.break_path(self.current_parent)
                 # self.make_guess(self.current_parent)
             else:
                 box.parent = self.current_parent if self.current_parent != box else box.parent
+                # self.print_family_tree()
                 if self.current_parent is not None:
                     self.current_parent.children.append(box)
                 self.make_guess(box)
@@ -361,6 +406,7 @@ class SmartSolve:
         return best_box
 
     def break_path(self, box):
+        box.value = 0
         for child in box.children:
             if child == box: continue
             child.parent = None
@@ -370,19 +416,26 @@ class SmartSolve:
             child.tried = []
             self.break_path(child)
         self.reestablish_options(box)
+        if box.parent is not None and len(box.options) == 0:
+            self.current_parent = box.parent
+            self.break_path(box.parent)
         box.children = []
 
     def make_guess(self, box):
         if box is None:
+            print("made guess on None")
             impossible()
 
         options = box.set_options()
+
         if len(options) == 0:
             # print(box)
             try:
-                self.break_path(box.parent)
+                print(box.parent)
                 box.parent.value = 0
+                self.break_path(box.parent)
             except AttributeError:
+                print("box no have parent")
                 impossible()
             # self.make_guess(box.parent)
         elif len(options) == 1:  # make a certain move
@@ -416,10 +469,19 @@ class SmartSolve:
     def filled():
         return Backtrace.filled()
 
+    def print_family_tree(self):
+        parent = self.current_parent
+        while parent is not None:
+            print(parent, end=" --> ")
+            parent = parent.parent
+        print()
+
 
 if __name__ == '__main__':
     board = create_board()
     draw_boxes()
-    create_locked(5)
+    create_locked(15)
+    #place_locked()
+    create_board()
     SmartSolve(True)
     over()

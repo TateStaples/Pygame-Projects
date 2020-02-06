@@ -20,6 +20,7 @@ asteroids = []
 
 bullets = []
 amount_of_bullets = 5
+
 score = 0
 
 
