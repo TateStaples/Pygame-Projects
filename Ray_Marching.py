@@ -85,7 +85,7 @@ class Ray:
         total_dis = 0
         while dis > 0:
             if draw:
-                pygame.time.delay(1000)
+                pygame.time.delay(10)
             dis = self.get_dis()
             if dis < 1:
                 break

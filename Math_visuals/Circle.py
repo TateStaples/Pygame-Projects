@@ -60,6 +60,9 @@ class Sim:
     def degrees(self):
         return degrees(self.radians())
 
+    def postion(self, spots=2):
+        return round(self.cos(), spots), round(self.sin(), spots)
+
     def get_vector(self):
         pos = pygame.mouse.get_pos()
         if distance(self.pos, pos) < self.radius:
@@ -104,6 +107,7 @@ class Sim:
         display(window, f"t = {round(self.t/pi, 2)}pi", (0, 0))
         display(window, f"radians = {round(self.radians(), 2)}", (0, 30))
         display(window, f"degrees = {round(self.degrees())}º", (0, 60))
+        display(window, (self.postion()), (0, 90))
 
         display(window, f"cos = {round(dx/self.radius, 2)}", (200, 0))
         display(window, f"sin = {round(dy*-1/self.radius, 2)}", (200, 50))

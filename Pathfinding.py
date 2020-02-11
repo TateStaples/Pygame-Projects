@@ -38,7 +38,7 @@ list_of_walls = []  # this will be filled with all the spot that the user draws 
 start_cords = (0, 0)
 end_cords = (10, 10)
 
-draw_process = False
+draw_process = True
 
 
 def get_square(cords):

@@ -176,7 +176,6 @@ class FlappyBird:
             pygame.display.update()
 
 
-
 if __name__ == '__main__':
     game = FlappyBird()
     game.play_game()
