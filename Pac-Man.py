@@ -694,3 +694,7 @@ while run:
     player.move()
     player.draw()
     pg.display.update()
+
+
+if __name__ == '__main__':
+    pass

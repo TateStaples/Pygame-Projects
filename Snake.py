@@ -1,5 +1,6 @@
 import random
 import pygame
+from resources import freeze_display
 pygame.init()
 
 # created jan 2, 2020
@@ -103,6 +104,9 @@ class SnakeGame:
         else:
             r, c = self.snek.head
             self.board[r][c] = 0
+        if self.get_next_pos(action) is None:
+            print("you lost")
+            self.over()
         self.snek.move(action)
         if len(self.snek.body) > 0:
             r2, c2 = self.snek.body[0]
@@ -163,6 +167,10 @@ class SnakeGame:
                 if spot == self.apple_val:
                     color = RED
                 pygame.draw.rect(window, color, [c * box_width, r * box_height, box_width, box_height])
+
+    def over(self):
+        freeze_display(100)
+        quit()
 
 
 class SimulatedSnake(SnakeGame):

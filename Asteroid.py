@@ -25,39 +25,38 @@ score = 0
 
 
 def rotate_polygon(list_of_points, rotation, center_x, center_y):
-    # information of how to do this can be found here: https://math.stackexchange.com/questions/1917449/rotate-polygon-around-center-and-get-the-coordinates
     x_cordinates = []
     y_cordinates = []
 
     for x, y in list_of_points:
-        x_cordinates.append(x)
-        y_cordinates.append(y)
+        x_cordinates.append(x-center_x)
+        y_cordinates.append(y-center_y)
     point_matrix = []
     point_matrix.append(x_cordinates)
     point_matrix.append(y_cordinates)
 
-    centroid_matrix = [[], []]
-    # center_x = sum(x_cordinates)/len(x_cordinates)
-    # center_y = sum(y_cordinates)/len(y_cordinates)
-    for i in range(len(x_cordinates)):
-        centroid_matrix[0].append(center_x)
-        centroid_matrix[1].append(center_y)
+    # centroid_matrix = [[], []]
+    # # center_x = sum(x_cordinates)/len(x_cordinates)
+    # # center_y = sum(y_cordinates)/len(y_cordinates)
+    # for i in range(len(x_cordinates)):
+    #     centroid_matrix[0].append(center_x)
+    #     centroid_matrix[1].append(center_y)
 
     rotation = math.radians(rotation)
     rotation_matrix = [
-        [math.cos(rotation), math.sin(rotation) * -1],
+        [math.cos(rotation), -math.sin(rotation)],
         [math.sin(rotation), math.cos(rotation)]
     ]
-
-    list1 = []
-    list2 = []
-    for entry in range(len(x_cordinates)):  # thing1 = P-C
-        list1.append(point_matrix[0][entry] - centroid_matrix[0][entry])
-        list2.append(point_matrix[1][entry] - centroid_matrix[1][entry])
-    thing1 = []
-    thing1.append(list1)
-    thing1.append(list2)
-    # print('thing1', thing1)
+    #
+    # list1 = []
+    # list2 = []
+    # for entry in range(len(x_cordinates)):  # thing1 = P-C
+    #     list1.append(point_matrix[0][entry] - centroid_matrix[0][entry])
+    #     list2.append(point_matrix[1][entry] - centroid_matrix[1][entry])
+    # thing1 = []
+    # thing1.append(list1)
+    # thing1.append(list2)
+    # # print('thing1', thing1)
 
     result = [[], []]
     for i in range(len(x_cordinates)):  # result = R * thing1
@@ -65,22 +64,23 @@ def rotate_polygon(list_of_points, rotation, center_x, center_y):
         result[1].append(0)
     for i in range(len(rotation_matrix)):
         # iterate through columns of Y
-        for j in range(len(thing1[0])):
+        for j in range(len(point_matrix[0])):
             # iterate through rows of Y
-            for k in range(len(thing1)):
-                result[i][j] += rotation_matrix[i][k] * thing1[k][j]
+            for k in range(len(point_matrix)):
+                result[i][j] += rotation_matrix[i][k] * point_matrix[k][j]
     # print('result', result)
 
-    list1 = []
-    list2 = []
-    for i in range(len(x_cordinates)):  # final = result + C
-        list1.append(result[0][i] + centroid_matrix[0][i])
-        list2.append(result[1][i] + centroid_matrix[1][i])
+    # list1 = []
+    # list2 = []
+    # for i in range(len(x_cordinates)):  # final = result + C
+    #     list1.append(result[0][i] + centroid_matrix[0][i])
+    #     list2.append(result[1][i] + centroid_matrix[1][i])
 
     # print ('lists', (list1,list2))
     polygon = []
-    for i in range(len(list1)):
-        polygon.append((list1[i], list2[i]))
+    print(result)
+    for x, y in zip(result[0], result[1]):
+        polygon.append((x + center_x, y + center_y))
 
     # print('OG', list_of_points)
     # print('C', centroid_matrix)

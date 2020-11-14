@@ -1,6 +1,7 @@
 from time import time
 from math import *
 import pygame
+pygame.init()
 
 RED = (255, 0, 0)
 LIGHT_RED = (255, 50, 50)
